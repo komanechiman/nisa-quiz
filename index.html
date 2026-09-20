@@ -218,6 +218,19 @@
     box-shadow:0 3px 0 var(--shadow); }
   .who-pill:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--shadow); }
   .who-pill.on{ border-color:var(--accent); color:var(--accent); background:var(--ok-soft); }
+  .me-chip{ display:inline-flex; align-items:center; gap:7px; background:var(--card); border:none;
+    border-radius:999px; padding:7px 14px; margin:0 2px 16px; font-family:inherit; font-size:13px;
+    font-weight:700; color:var(--text); cursor:pointer; box-shadow:0 3px 0 var(--shadow); }
+  .me-chip .tag{ font-size:11px; color:var(--soft); font-weight:400; }
+  .me-chip:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--shadow); }
+  .linkbox{ display:flex; gap:8px; margin-top:10px; }
+  .linkbox .tin{ flex:1; font-size:12px; }
+  .steps{ margin:0 0 12px; padding-left:1.3em; font-size:12px; color:var(--soft); line-height:1.85; }
+  .steps li{ margin-bottom:3px; }
+  .steps b{ color:var(--text); }
+  .adult{ display:inline-block; background:var(--notice-bg); border:1px solid var(--notice-bd);
+    color:var(--notice-fg); font-size:10.5px; font-weight:700; border-radius:999px;
+    padding:2px 9px; margin-left:6px; vertical-align:middle; }
   .pick-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
   .pick-btn{ border:2px solid var(--line); background:var(--bg); border-radius:14px; padding:16px 10px;
     font-family:inherit; font-size:17px; font-weight:800; color:var(--text); cursor:pointer; }
@@ -348,11 +361,29 @@
       <p class="sethelp">だれがやったかを、おうちの人へのメールに入れます。記録もなまえごとに分かれます。<br>
       なまえを変えたい・増やしたいときは <b>config.js</b> の PLAYERS を書きかえてください。</p>
       <div id="setPlayers"></div>
+
+      <label class="swrow" style="margin-top:14px;"><input type="checkbox" id="lockMe"><span>この端末は いつもこの人</span></label>
+      <p class="sethelp" style="margin:6px 0 0;">自分専用のスマホならチェック。えらぶボタンが出なくなります。</p>
+
+      <label class="slabel" for="myLink">この人ぶんのリンク（ホーム画面に追加する用）</label>
+      <div class="linkbox">
+        <input class="tin" id="myLink" type="text" readonly>
+        <button class="mini sub" id="copyLink">コピー</button>
+      </div>
+      <p class="sethelp" id="copyMsg" style="margin:6px 0 0;">このリンクで開くと、その人に自動で切りかわります。</p>
     </div>
 
     <div class="setcard">
-      <h3>✉️ おうちの人にメール</h3>
-      <p class="sethelp">Google Apps Script で作った受信URLを貼ると、1セット終わるたびに結果がメールで届きます。作りかたは <b>apps-script/Code.gs</b> の先頭と README を見てください。</p>
+      <h3>✉️ けっかをメールで送る<span class="adult">おとな用</span></h3>
+      <p class="sethelp">1セット終わるたびに「だれが・何点だったか・どこを間違えたか」がメールで届きます。使わなくてもクイズはふつうに遊べます。</p>
+      <p class="sethelp" style="margin-bottom:8px;">このページ自体はメールを出せないので、<b>送信係を1回だけ用意します</b>。Googleの無料サービス（Apps Script）を使うので、追加の登録やお金はかかりません。</p>
+      <ol class="steps">
+        <li>パソコンで <b>script.google.com</b> を開く</li>
+        <li>GitHub の <b>apps-script/Code.gs</b> の中身を貼りつける</li>
+        <li>「デプロイ」→「ウェブアプリ」で公開すると <b>URL</b> が出る（5分ほど）</li>
+        <li>そのURLを下に貼って「保存」→「テスト送信」</li>
+      </ol>
+      <p class="sethelp" style="margin-bottom:12px;">くわしい手順は Code.gs の先頭のコメントに全部書いてあります。</p>
       <label class="swrow"><input type="checkbox" id="mailOn"><span>メールを送る</span></label>
       <label class="slabel" for="mailUrl">受信URL（.../exec で終わるもの）</label>
       <input class="tin w" id="mailUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/..../exec">
@@ -413,6 +444,23 @@
                                                     : ["あいり", "さき", "まま", "ぱぱ"];
   var player  = load("player", null);
   if(player !== null && roster.indexOf(player) < 0) player = null;
+  var lockMe  = load("lock", false);
+
+  // ?me=あいり のように開くと、その人に固定される（えらぶ画面が出なくなる）。
+  // iOS Safari は7日使わないと localStorage を消すので、その復帰手段も兼ねている。
+  try{
+    var qMe = new URLSearchParams(location.search).get("me");
+    if(qMe && roster.indexOf(qMe) >= 0){
+      player = qMe; save("player", player);
+      lockMe = true; save("lock", lockMe);
+    }
+  }catch(e){}
+
+  function myLink(n){
+    // URLに使って問題ない文字ならそのまま載せる（日本語のほうが読みやすいので）
+    var v = /^[^\s&#?=+%\/]+$/.test(n) ? n : encodeURIComponent(n);
+    return location.origin + location.pathname + "?me=" + v;
+  }
   var mailCfg = load("mail", null) || { on:true, url: CFG.MAIL_ENDPOINT || "", token: CFG.MAIL_TOKEN || "" };
   var queue   = load("queue", []);       // 送信できなかった結果
 
@@ -814,6 +862,12 @@
       });
       h += '</div></div>';
       box.innerHTML = h;
+    } else if(lockMe){
+      // この端末は いつもこの人。えらぶ手間をなくす
+      box.innerHTML = '<button class="me-chip" id="meChip">👤 ' + esc(player)
+        + '<span class="tag">この端末</span></button>';
+      $("meChip").addEventListener("click", renderSet);
+      return;
     } else {
       h = '<div class="who-row"><span class="who-lb">だれが やる?</span>';
       roster.forEach(function(n){
@@ -847,6 +901,10 @@
         renderSet();
       });
     }
+
+    $("lockMe").checked = !!lockMe;
+    $("lockMe").disabled = !player;
+    $("myLink").value = player ? myLink(player) : "";
 
     $("mailOn").checked = !!mailCfg.on;
     $("mailUrl").value  = mailCfg.url || "";
@@ -909,6 +967,22 @@
   });
   $("setBtn").addEventListener("click", renderSet);
   $("setBackBtn").addEventListener("click", function(){ renderMenu(); showScreen("screen-select"); });
+  $("lockMe").addEventListener("change", function(){
+    lockMe = this.checked; save("lock", lockMe);
+  });
+  $("copyLink").addEventListener("click", function(){
+    var v = $("myLink").value;
+    if(!v) return;
+    var done = function(){ $("copyMsg").textContent = "コピーしました。"; $("copyMsg").className = "sethelp ok"; };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(v).then(done, function(){
+        $("myLink").select(); $("copyMsg").textContent = "長押しでコピーしてください。";
+      });
+    } else {
+      $("myLink").select();
+      $("copyMsg").textContent = "長押しでコピーしてください。";
+    }
+  });
   $("mailSave").addEventListener("click", function(){
     saveMail();
     $("mailMsg").textContent = "保存しました。";
