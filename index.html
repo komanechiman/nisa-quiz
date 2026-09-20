@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="とうしクイズ">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#F1F5F3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#141B19" media="(prefers-color-scheme: dark)">
+<meta name="description" content="2027年に始まるこどもNISAと、投資信託・つみたての基礎を4択で学ぶ小中学生向けクイズ110問">
+<link rel="manifest" href="manifest.json">
+<title>とうしクイズ 110</title>
+<style>
+  :root{
+    --bg:#F1F5F3; --card:#FFF; --text:#26343A; --soft:#6E8189;
+    --shadow:#DCE5E1; --line:#E6EDE9; --glow:rgba(255,255,255,.9);
+    --accent:#1E9E78; --accent-dark:#137A5B;
+    --gold:#E8A317; --gold-dark:#B37B00;
+    --ok:#1E9E78; --ng:#E2566B;
+    --notice-bg:#FFF8E6; --notice-bd:#F3DFA8; --notice-fg:#7A5A12; --notice-fg-b:#5E440B;
+    --kb-bg:#EEF4F1; --ok-soft:#EAF7F2; --ng-soft:#FDEEF0; --ng-soft-bd:#F2D3D8;
+    --panel-soft:#F5F9F7; --btn2-bg:#EDF3F0;
+    --gold-1:#FFF6E2; --gold-2:#FFEFCD; --gold-bd:#EBD9AE;
+    --sh1:rgba(38,52,58,.12); --sh2:rgba(38,52,58,.08);
+    --r-lg:22px; --r-md:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#141B19; --card:#1E2825; --text:#E7EFEB; --soft:#9AADA6;
+      --shadow:#101715; --line:#2C3A35; --glow:rgba(255,255,255,.04);
+      --accent:#3FBF95; --accent-dark:#1B6E54;
+      --gold:#E0A22B; --gold-dark:#8E6408;
+      --ok:#3FBF95; --ng:#F0788A;
+      --notice-bg:#2A2416; --notice-bd:#4A3D1C; --notice-fg:#DCC68C; --notice-fg-b:#F3E2B4;
+      --kb-bg:#2B3934; --ok-soft:#173129; --ng-soft:#361E23; --ng-soft-bd:#4A2B31;
+      --panel-soft:#19231F; --btn2-bg:#27342F;
+      --gold-1:#332A16; --gold-2:#2B230F; --gold-bd:#4A3D1C;
+      --sh1:rgba(0,0,0,.5); --sh2:rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#141B19; --card:#1E2825; --text:#E7EFEB; --soft:#9AADA6;
+    --shadow:#101715; --line:#2C3A35; --glow:rgba(255,255,255,.04);
+    --accent:#3FBF95; --accent-dark:#1B6E54;
+    --gold:#E0A22B; --gold-dark:#8E6408;
+    --ok:#3FBF95; --ng:#F0788A;
+    --notice-bg:#2A2416; --notice-bd:#4A3D1C; --notice-fg:#DCC68C; --notice-fg-b:#F3E2B4;
+    --kb-bg:#2B3934; --ok-soft:#173129; --ng-soft:#361E23; --ng-soft-bd:#4A2B31;
+    --panel-soft:#19231F; --btn2-bg:#27342F;
+    --gold-1:#332A16; --gold-2:#2B230F; --gold-bd:#4A3D1C;
+    --sh1:rgba(0,0,0,.5); --sh2:rgba(0,0,0,.35);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  /* display を持つ要素にも hidden を効かせる */
+  [hidden]{ display:none !important; }
+  html,body{ height:100%; margin:0; }
+  body{
+    background:
+      radial-gradient(circle at 12% 6%,var(--glow) 0%,rgba(255,255,255,0) 40%),
+      radial-gradient(circle at 90% 92%,var(--glow) 0%,rgba(255,255,255,0) 36%),var(--bg);
+    font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","BIZ UDPGothic","Yu Gothic",-apple-system,sans-serif;
+    color:var(--text); display:flex; flex-direction:column; align-items:center;
+    padding:0 0 32px; -webkit-text-size-adjust:100%; line-height:1.7;
+  }
+  #app{ width:100%; max-width:480px; padding:0 16px; position:relative; }
+
+  .topline{ width:100%; height:6px; background:linear-gradient(90deg,var(--accent),var(--gold)); }
+  header.topbar{ display:flex; align-items:center; justify-content:space-between; padding:14px 2px 8px; gap:8px; }
+  .brand{ display:flex; align-items:center; gap:8px; min-width:0; }
+  .brand h1{ font-size:17px; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:.01em; }
+  .top-btns{ display:flex; gap:7px; flex-shrink:0; }
+  .icon-btn{ width:38px; height:38px; border-radius:50%; border:none; background:var(--card);
+    box-shadow:0 3px 0 var(--sh1),0 2px 6px var(--sh2);
+    display:flex; align-items:center; justify-content:center; font-size:17px; cursor:pointer; padding:0; }
+  .icon-btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--sh1); }
+
+  .screen{ display:none; }
+  .screen.active{ display:block; animation:fadeIn .22s ease; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  .intro{ font-size:13.5px; color:var(--soft); margin:2px 2px 14px; }
+  .notice{ background:var(--notice-bg); border:1.5px solid var(--notice-bd); border-radius:var(--r-md);
+    padding:11px 13px; font-size:12.5px; color:var(--notice-fg); margin:0 0 16px; line-height:1.65; }
+  .notice b{ color:var(--notice-fg-b); }
+
+  /* --- メニュー --- */
+  .mode-row{ display:flex; gap:10px; margin-bottom:18px; }
+  .mode-btn{ flex:1; border:none; font-family:inherit; cursor:pointer; text-align:left;
+    background:var(--card); border-radius:var(--r-md); padding:13px 14px;
+    box-shadow:0 4px 0 var(--shadow),0 6px 14px var(--sh2); }
+  .mode-btn:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--shadow); }
+  .mode-btn .mt{ display:block; font-size:14px; font-weight:700; }
+  .mode-btn .ms{ display:block; font-size:11.5px; color:var(--soft); margin-top:2px; }
+  .mode-btn[disabled]{ opacity:.45; cursor:default; }
+  .mode-btn.gold{ background:linear-gradient(180deg,var(--gold-1),var(--gold-2)); box-shadow:0 4px 0 var(--gold-bd),0 6px 14px var(--sh2); }
+
+  .sec-label{ font-size:12px; color:var(--soft); font-weight:700; letter-spacing:.06em;
+    margin:0 4px 8px; display:flex; justify-content:space-between; align-items:baseline; }
+
+  .cat-card{ display:flex; align-items:center; gap:12px; width:100%; text-align:left;
+    background:var(--card); border:none; border-radius:var(--r-md); padding:12px 14px; margin-bottom:10px;
+    font-family:inherit; cursor:pointer; box-shadow:0 4px 0 var(--shadow),0 6px 14px var(--sh2);
+    border-left:5px solid var(--cs); }
+  .cat-card:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--shadow); }
+  .cat-card .bdg{ width:40px; height:40px; border-radius:13px; display:flex; align-items:center;
+    justify-content:center; font-size:20px; flex-shrink:0; background:var(--cw); }
+  .cat-card .meta{ flex:1; min-width:0; }
+  .cat-card .name{ display:block; font-size:15px; font-weight:700; }
+  .cat-card .desc{ display:block; font-size:11.5px; color:var(--soft); }
+  .cat-card .right{ text-align:right; flex-shrink:0; }
+  .cat-card .best{ display:block; font-size:12px; font-weight:700; color:var(--accent); }
+  .cat-card .cnt{ display:block; font-size:11px; color:var(--soft); }
+
+  /* --- クイズ --- */
+  .quizbar{ display:flex; align-items:center; justify-content:space-between; gap:8px; margin:2px 2px 10px; }
+  .pill{ display:inline-flex; align-items:center; gap:6px; background:var(--card); border-radius:999px;
+    padding:6px 12px; font-size:12.5px; font-weight:700; box-shadow:0 2px 0 var(--shadow); }
+  .pill .dot{ width:9px; height:9px; border-radius:50%; }
+  .pill .lt{ color:var(--soft); font-weight:400; }
+  .progress{ display:flex; gap:4px; margin:0 2px 14px; }
+  .progress i{ flex:1; height:6px; border-radius:3px; background:var(--shadow); transition:background .2s; }
+  .progress i.ok{ background:var(--ok); }
+  .progress i.ng{ background:var(--ng); }
+  .progress i.now{ background:var(--gold); }
+
+  .qcard{ background:var(--card); border-radius:var(--r-lg); padding:20px 18px;
+    box-shadow:0 5px 0 var(--shadow),0 10px 22px var(--sh1); margin-bottom:14px; }
+  .qnum{ font-size:11.5px; color:var(--soft); font-weight:700; letter-spacing:.08em; margin-bottom:6px; }
+  .qtext{ font-size:17px; font-weight:700; line-height:1.65; margin:0; }
+
+  .choices{ display:flex; flex-direction:column; gap:10px; }
+  .choice{ display:flex; align-items:flex-start; gap:11px; width:100%; text-align:left;
+    background:var(--card); border:2px solid transparent; border-radius:var(--r-md); padding:13px 14px;
+    font-family:inherit; font-size:14.5px; line-height:1.55; color:var(--text); cursor:pointer;
+    box-shadow:0 4px 0 var(--shadow),0 6px 14px var(--sh2); transition:border-color .15s; }
+  .choice:active:not([disabled]){ transform:translateY(2px); box-shadow:0 2px 0 var(--shadow); }
+  .choice .kb{ width:24px; height:24px; border-radius:8px; background:var(--kb-bg); color:var(--soft);
+    font-size:12.5px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+  .choice[disabled]{ cursor:default; }
+  .choice.correct{ border-color:var(--ok); background:var(--ok-soft); }
+  .choice.correct .kb{ background:var(--ok); color:#fff; }
+  .choice.wrong{ border-color:var(--ng); background:var(--ng-soft); }
+  .choice.wrong .kb{ background:var(--ng); color:#fff; }
+  .choice.dim{ opacity:.5; }
+
+  .exp{ margin-top:14px; background:var(--card); border-radius:var(--r-lg); padding:16px 17px;
+    box-shadow:0 5px 0 var(--shadow),0 10px 22px var(--sh1); animation:fadeIn .2s ease; }
+  .exp .hd{ display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800; margin-bottom:8px; }
+  .exp .hd.ok{ color:var(--ok); } .exp .hd.ng{ color:var(--ng); }
+  .exp .ansline{ font-size:13px; color:var(--soft); margin:0 0 10px; padding-bottom:10px; border-bottom:1px solid var(--line); }
+  .exp .ansline b{ color:var(--text); }
+  .exp .body{ font-size:14px; line-height:1.85; margin:0; }
+  .exp .next{ margin-top:16px; width:100%; border:none; border-radius:999px; padding:14px;
+    font-family:inherit; font-size:15px; font-weight:800; background:var(--accent); color:#fff;
+    cursor:pointer; box-shadow:0 4px 0 var(--accent-dark); }
+  .exp .next:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--accent-dark); }
+  .tip{ text-align:center; font-size:12px; color:var(--soft); margin:14px 0 0; }
+
+  /* --- 判定オーバーレイ --- */
+  #verdict{ position:fixed; inset:0; display:none; align-items:center; justify-content:center;
+    pointer-events:none; z-index:60; flex-direction:column; }
+  #verdict.show{ display:flex; }
+  #verdict .mark{ font-size:140px; font-weight:900; line-height:1; animation:pop .45s ease; }
+  #verdict .mark.vok{ color:var(--ok); }
+  #verdict .mark.vng{ color:var(--ng); }
+  @keyframes pop{ 0%{transform:scale(.4); opacity:0;} 55%{transform:scale(1.12); opacity:1;} 100%{transform:scale(1); opacity:1;} }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; }
+  }
+  button:focus-visible, .choice:focus-visible{ outline:3px solid var(--gold); outline-offset:2px; }
+
+  /* --- 結果 --- */
+  .done{ background:var(--card); border-radius:var(--r-lg); padding:24px 18px; text-align:center;
+    box-shadow:0 5px 0 var(--shadow),0 10px 22px var(--sh1); }
+  .done .emoji{ font-size:54px; line-height:1; }
+  .done h2{ font-size:20px; margin:10px 0 4px; }
+  .done .line{ font-size:13.5px; color:var(--soft); margin:0 0 16px; }
+  .scorebox{ background:var(--panel-soft); border-radius:var(--r-md); padding:16px; }
+  .scorebox .big{ font-size:15px; } .scorebox .big b{ font-size:34px; color:var(--accent); margin:0 4px; }
+  .scorebox .pct{ font-size:12.5px; color:var(--soft); margin-top:2px; }
+  .scorebox .stars{ font-size:22px; margin-top:6px; letter-spacing:3px; }
+  .btn-row{ display:flex; flex-direction:column; gap:10px; margin-top:18px; }
+  .btn{ border:none; border-radius:999px; padding:14px; font-family:inherit; font-size:15px;
+    font-weight:800; cursor:pointer; }
+  .btn.primary{ background:var(--accent); color:#fff; box-shadow:0 4px 0 var(--accent-dark); }
+  .btn.gold{ background:var(--gold); color:#4A3200; box-shadow:0 4px 0 var(--gold-dark); }
+  .btn.secondary{ background:var(--btn2-bg); color:var(--text); box-shadow:0 4px 0 var(--shadow); }
+  .btn.danger{ background:var(--ng-soft); color:var(--ng); box-shadow:0 4px 0 var(--ng-soft-bd); }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 0 rgba(0,0,0,.12); }
+
+  .review{ margin-top:16px; }
+  .review h3{ font-size:13px; color:var(--soft); margin:0 0 8px 4px; letter-spacing:.04em; }
+  .ritem{ background:var(--card); border-radius:var(--r-md); padding:13px 15px; margin-bottom:9px;
+    box-shadow:0 3px 0 var(--shadow); border-left:4px solid var(--ng); text-align:left; }
+  .ritem .rq{ font-size:13.5px; font-weight:700; margin:0 0 6px; }
+  .ritem .ra{ font-size:12.5px; color:var(--ok); font-weight:700; margin:0 0 6px; }
+  .ritem .re{ font-size:12.5px; color:var(--soft); margin:0; line-height:1.75; }
+
+  /* --- 記録 --- */
+  .hist-sum{ display:flex; gap:9px; margin-bottom:14px; }
+  .hist-sum>div{ flex:1; background:var(--card); border-radius:var(--r-md); padding:13px 8px; text-align:center;
+    box-shadow:0 3px 0 var(--shadow); }
+  .hist-sum b{ display:block; font-size:21px; color:var(--accent); }
+  .hist-sum span{ display:block; font-size:10.5px; color:var(--soft); margin-top:2px; }
+  .hrow{ display:flex; align-items:center; justify-content:space-between; background:var(--card);
+    border-radius:var(--r-md); padding:11px 14px; margin-bottom:8px; box-shadow:0 3px 0 var(--shadow); font-size:13.5px; }
+  .hrow .hn{ font-weight:700; }
+  .hrow .hv{ color:var(--soft); font-size:12.5px; }
+  .hrow .hv b{ color:var(--accent); font-size:15px; }
+
+  /* --- なまえ / せってい --- */
+  .who-row{ display:flex; flex-wrap:wrap; align-items:center; gap:7px; margin:0 2px 16px; }
+  .who-lb{ flex-basis:100%; font-size:12px; color:var(--soft); font-weight:700; margin-bottom:1px; }
+  .who-pill{ border:2px solid transparent; background:var(--card); color:var(--soft); border-radius:999px;
+    padding:7px 15px; font-family:inherit; font-size:13.5px; font-weight:700; cursor:pointer;
+    box-shadow:0 3px 0 var(--shadow); }
+  .who-pill:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--shadow); }
+  .who-pill.on{ border-color:var(--accent); color:var(--accent); background:var(--ok-soft); }
+  .pick-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .pick-btn{ border:2px solid var(--line); background:var(--bg); border-radius:14px; padding:16px 10px;
+    font-family:inherit; font-size:17px; font-weight:800; color:var(--text); cursor:pointer; }
+  .pick-btn:active{ transform:translateY(2px); }
+  .pick-btn.on{ border-color:var(--accent); background:var(--ok-soft); color:var(--accent); }
+  .whocard{ background:var(--card); border-radius:var(--r-md); padding:14px 15px; margin:0 0 16px;
+    box-shadow:0 4px 0 var(--shadow),0 6px 14px var(--sh2); }
+  .whocard b{ display:block; font-size:14px; margin-bottom:3px; }
+  .whocard .sethelp{ margin:0 0 10px; }
+
+  .setcard{ background:var(--card); border-radius:var(--r-lg); padding:16px 17px; margin-bottom:14px;
+    box-shadow:0 5px 0 var(--shadow),0 10px 22px var(--sh1); }
+  .setcard h3{ font-size:15px; margin:0 0 4px; }
+  .sethelp{ font-size:11.5px; color:var(--soft); line-height:1.7; margin:0 0 12px; }
+  .sethelp.ok{ color:var(--ok); font-weight:700; }
+  .sethelp.ng{ color:var(--ng); font-weight:700; }
+  .slabel{ display:block; font-size:11.5px; color:var(--soft); font-weight:700; margin:12px 0 5px; }
+  .tin{ font-family:inherit; font-size:14px; padding:10px 12px; border-radius:11px;
+    border:2px solid var(--line); background:var(--bg); color:var(--text); min-width:0; }
+  .tin:focus{ outline:none; border-color:var(--accent); }
+  .tin.w{ width:100%; }
+  .addrow{ display:flex; gap:8px; }
+  .addrow .tin{ flex:1; }
+  .mini{ border:none; border-radius:11px; padding:10px 16px; font-family:inherit; font-size:13.5px;
+    font-weight:700; background:var(--accent); color:#fff; cursor:pointer;
+    box-shadow:0 3px 0 var(--accent-dark); flex-shrink:0; }
+  .mini.sub{ background:var(--btn2-bg); color:var(--text); box-shadow:0 3px 0 var(--shadow); }
+  .mini:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--accent-dark); }
+  .btn-row2{ display:flex; gap:8px; margin-top:14px; }
+  .swrow{ display:flex; align-items:center; gap:9px; font-size:14px; font-weight:700; cursor:pointer; }
+  .swrow input{ width:19px; height:19px; accent-color:var(--accent); }
+  .prow{ display:flex; align-items:center; justify-content:space-between; gap:8px;
+    padding:9px 0; border-bottom:1px solid var(--line); font-size:14px; }
+  .prow:last-of-type{ border-bottom:none; }
+  .prow .del{ border:none; background:var(--ng-soft); color:var(--ng); border-radius:9px;
+    padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
+
+  .mailstat{ margin-top:14px; font-size:13px; font-weight:700; border-radius:12px; padding:10px 12px; }
+  .mailstat[hidden]{ display:none; }
+  .mailstat.wait{ background:var(--panel-soft); color:var(--soft); }
+  .mailstat.ok{ background:var(--ok-soft); color:var(--ok); }
+  .mailstat.ng{ background:var(--ng-soft); color:var(--ng); }
+  .empty{ text-align:center; color:var(--soft); font-size:13px; padding:24px 0; }
+</style>
+</head>
+<body>
+<div id="verdict"><span class="mark" id="verdictMark">◯</span></div>
+
+<div id="app">
+  <div class="topline"></div>
+  <header class="topbar">
+    <div class="brand"><span style="font-size:21px;">📊</span><h1>とうしクイズ 110</h1></div>
+    <div class="top-btns">
+      <button class="icon-btn" id="histBtn" aria-label="記録">🏆</button>
+      <button class="icon-btn" id="setBtn" aria-label="せってい">⚙️</button>
+      <button class="icon-btn" id="soundBtn" aria-label="音">🔊</button>
+    </div>
+  </header>
+
+  <!-- ===== メニュー ===== -->
+  <section class="screen active" id="screen-select">
+    <p class="intro" id="introLine">読みこみ中…</p>
+    <div class="notice">
+      <b>2027年1月、こどもNISAがはじまります。</b>0〜17歳が使えて、年間60万円・一生で600万円まで非課税。買えるのは「つみたて投資枠」の投資信託だけで、引き出せるのは原則12歳から（本人の同意が必要）。18歳になると自動的に大人のNISAに移ります。<br>
+      このクイズは、そのときに自分で選べるようになるための基礎編です。一般的な知識をあつかっていて、特定の商品をすすめるものではありません。
+    </div>
+
+    <div id="whoBox"></div>
+
+    <div class="mode-row">
+      <button class="mode-btn gold" id="randomBtn">
+        <span class="mt">🎲 ランダム20問</span>
+        <span class="ms">全ジャンルからシャッフル</span>
+      </button>
+      <button class="mode-btn" id="reviewBtn">
+        <span class="mt">🔁 まちがい復習</span>
+        <span class="ms" id="reviewCnt">0問たまってるよ</span>
+      </button>
+    </div>
+
+    <div class="sec-label"><span>ジャンルをえらぶ</span><span id="totalDone"></span></div>
+    <div id="catList"></div>
+  </section>
+
+  <!-- ===== 出題 ===== -->
+  <section class="screen" id="screen-quiz">
+    <div class="quizbar">
+      <div class="pill"><span class="dot" id="pillDot"></span><span id="pillName">—</span></div>
+      <div class="pill"><span id="qNo">1</span><span class="lt">/</span><span id="qTotal">10</span><span class="lt">・</span><span>⭕</span><span id="scoreNow">0</span></div>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div class="qcard">
+      <div class="qnum" id="qCat">—</div>
+      <p class="qtext" id="qText">—</p>
+    </div>
+    <div class="choices" id="choices"></div>
+    <div id="expSlot"></div>
+    <p class="tip" id="tipLine">こたえだと思うボタンをタップしてね</p>
+  </section>
+
+  <!-- ===== 結果 ===== -->
+  <section class="screen" id="screen-done">
+    <div class="done">
+      <div class="emoji" id="doneEmoji">🎉</div>
+      <h2 id="doneTitle">おつかれさま!</h2>
+      <p class="line" id="doneLine"></p>
+      <div class="scorebox">
+        <div class="big"><span id="doneTotal">10</span>問中<b id="doneScore">0</b>問せいかい</div>
+        <div class="pct" id="donePct"></div>
+        <div class="stars" id="doneStars"></div>
+      </div>
+      <div class="mailstat" id="mailStat" hidden></div>
+      <div class="btn-row">
+        <button class="btn gold" id="againWrongBtn" style="display:none;">まちがえた問題だけ もう一度</button>
+        <button class="btn primary" id="retryBtn">もう一度おなじジャンル</button>
+        <button class="btn secondary" id="otherBtn">ジャンルをえらび直す</button>
+      </div>
+    </div>
+    <div class="review" id="reviewBox"></div>
+  </section>
+
+  <!-- ===== せってい ===== -->
+  <section class="screen" id="screen-set">
+    <p class="intro">せってい</p>
+
+    <div class="setcard">
+      <h3>👤 なまえ</h3>
+      <p class="sethelp">だれがやったかを、おうちの人へのメールに入れます。記録もなまえごとに分かれます。<br>
+      なまえを変えたい・増やしたいときは <b>config.js</b> の PLAYERS を書きかえてください。</p>
+      <div id="setPlayers"></div>
+    </div>
+
+    <div class="setcard">
+      <h3>✉️ おうちの人にメール</h3>
+      <p class="sethelp">Google Apps Script で作った受信URLを貼ると、1セット終わるたびに結果がメールで届きます。作りかたは <b>apps-script/Code.gs</b> の先頭と README を見てください。</p>
+      <label class="swrow"><input type="checkbox" id="mailOn"><span>メールを送る</span></label>
+      <label class="slabel" for="mailUrl">受信URL（.../exec で終わるもの）</label>
+      <input class="tin w" id="mailUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/..../exec">
+      <label class="slabel" for="mailTok">あいことば（Code.gs の SECRET と同じ文字）</label>
+      <input class="tin w" id="mailTok" type="text" autocomplete="off" placeholder="（空でもOK）">
+      <div class="btn-row2">
+        <button class="mini" id="mailSave">保存</button>
+        <button class="mini sub" id="mailTest">テスト送信</button>
+      </div>
+      <p class="sethelp" id="mailMsg" style="margin:12px 0 0;"></p>
+      <p class="sethelp" id="queueMsg" style="margin:6px 0 0;"></p>
+    </div>
+
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn primary" id="setBackBtn">もどる</button>
+    </div>
+  </section>
+
+  <!-- ===== 記録 ===== -->
+  <section class="screen" id="screen-hist">
+    <p class="intro">これまでの記録</p>
+    <div class="hist-sum">
+      <div><b id="hsGames">0</b><span>プレイ回数</span></div>
+      <div><b id="hsCorrect">0</b><span>のべ正解数</span></div>
+      <div><b id="hsRate">-</b><span>正答率</span></div>
+    </div>
+    <div id="histList"></div>
+    <div class="btn-row" style="margin-top:16px;">
+      <button class="btn primary" id="histBackBtn">もどる</button>
+      <button class="btn danger" id="histClearBtn">記録をぜんぶ消す</button>
+    </div>
+  </section>
+</div>
+
+<script src="config.js"></script>
+<script src="questions.js"></script>
+<script>
+(function(){
+  "use strict";
+  var DATA = window.QUIZ_DATA || [];
+  var KEY = "toushi.v1";
+  var $ = function(id){ return document.getElementById(id); };
+
+  /* ---------- 保存 ---------- */
+  function load(k, def){
+    try { var v = localStorage.getItem(KEY+"."+k); return v ? JSON.parse(v) : def; }
+    catch(e){ return def; }
+  }
+  function save(k, v){
+    try { localStorage.setItem(KEY+"."+k, JSON.stringify(v)); } catch(e){}
+  }
+  var CFG = window.QUIZ_CONFIG || {};
+  var stats = load("stats", {});        // catId -> {games, best, correct, asked}
+  var wrongAll = load("wrong", {});     // { なまえ: ["catId:qi", ...] }
+  if(Array.isArray(wrongAll)) wrongAll = {};   // 旧形式（なまえ共通）は捨てる
+  var soundOn = load("sound", true);
+  var roster  = (CFG.PLAYERS && CFG.PLAYERS.length) ? CFG.PLAYERS.slice()
+                                                    : ["あいり", "さき", "まま", "ぱぱ"];
+  var player  = load("player", null);
+  if(player !== null && roster.indexOf(player) < 0) player = null;
+  var mailCfg = load("mail", null) || { on:true, url: CFG.MAIL_ENDPOINT || "", token: CFG.MAIL_TOKEN || "" };
+  var queue   = load("queue", []);       // 送信できなかった結果
+
+  /* ---------- 音 ---------- */
+  var actx = null;
+  function beep(freqs, dur){
+    if(!soundOn) return;
+    try{
+      if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)();
+      if(actx.state === "suspended") actx.resume();
+      freqs.forEach(function(f, i){
+        var o = actx.createOscillator(), g = actx.createGain();
+        o.type = "sine"; o.frequency.value = f;
+        var t = actx.currentTime + i*dur;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.18, t+0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+        o.connect(g); g.connect(actx.destination);
+        o.start(t); o.stop(t+dur+0.02);
+      });
+    }catch(e){}
+  }
+  var sndOk = function(){ beep([880,1318.5], 0.13); };
+  var sndNg = function(){ beep([330,247], 0.17); };
+
+  /* ---------- 便利関数 ---------- */
+  function esc(t){
+    return String(t == null ? "" : t).replace(/[&<>"']/g, function(c){
+      return { "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c];
+    });
+  }
+  function shuffle(a){
+    var r = a.slice();
+    for(var i=r.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=r[i]; r[i]=r[j]; r[j]=t; }
+    return r;
+  }
+  function catById(id){ for(var i=0;i<DATA.length;i++){ if(DATA[i].id===id) return DATA[i]; } return null; }
+  function key(catId, qi){ return catId+":"+qi; }
+  function statKey(id){ return player ? (player + "|" + id) : id; }
+  function wrongList(){
+    var k = player || "_";
+    if(!wrongAll[k]) wrongAll[k] = [];
+    return wrongAll[k];
+  }
+  function saveWrong(){ save("wrong", wrongAll); }
+  function itemFromKey(k){
+    var p = k.split(":"), c = catById(p[0]);
+    if(!c) return null;
+    var qi = parseInt(p[1],10);
+    if(!c.qs[qi]) return null;
+    return { cat:c, qi:qi, q:c.qs[qi] };
+  }
+  function showScreen(id){
+    var ss = document.querySelectorAll(".screen");
+    for(var i=0;i<ss.length;i++) ss[i].classList.remove("active");
+    $(id).classList.add("active");
+    window.scrollTo(0,0);
+  }
+
+  /* ---------- メール送信 ---------- */
+  function mailReady(){ return !!(mailCfg.on && mailCfg.url); }
+
+  function newId(){
+    return Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 10);
+  }
+
+  function payloadBase(){
+    var d = new Date();
+    return {
+      id: newId(),                       // 重複送信をサーバー側で弾くための印
+      app: CFG.APP_NAME || document.title,
+      token: mailCfg.token || "",
+      player: player || "（なまえ未設定）",
+      at: d.toISOString(),
+      atLocal: d.toLocaleString("ja-JP")
+    };
+  }
+
+  // 成功したと言えるのは fetch がレスポンスを返したときだけ。
+  // fetch が落ちたときは sendBeacon も一応投げるが、sendBeacon は「送信キューに積めた」
+  // だけで true を返し届いたかは分からないので、成功とは数えずキューに残して再送する。
+  // 二重に届く可能性があるぶん、payload.id を見て Code.gs 側で重複を捨てている。
+  function postOnce(payload){
+    return new Promise(function(resolve){
+      var body = JSON.stringify(payload);
+      fetch(mailCfg.url, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: body,
+        redirect: "follow"
+      }).then(function(r){ resolve(!!r.ok); })
+        .catch(function(){
+          try{
+            var blob = new Blob([body], { type:"text/plain;charset=utf-8" });
+            if(navigator.sendBeacon) navigator.sendBeacon(mailCfg.url, blob);
+          }catch(e){}
+          resolve(false);
+        });
+    });
+  }
+
+  function enqueue(payload){
+    queue.push(payload);
+    if(queue.length > 50) queue = queue.slice(-50);
+    save("queue", queue);
+  }
+
+  function flushQueue(){
+    if(!mailReady() || !queue.length) return Promise.resolve(0);
+    var pending = queue.slice();
+    queue = []; save("queue", queue);
+    var sent = 0;
+    return pending.reduce(function(chain, item){
+      return chain.then(function(){
+        return postOnce(item).then(function(ok){
+          if(ok) sent++; else enqueue(item);
+        });
+      });
+    }, Promise.resolve()).then(function(){ return sent; });
+  }
+
+  function setMailStat(text, kind){
+    var el = $("mailStat");
+    if(!text){ el.hidden = true; return; }
+    el.hidden = false;
+    el.className = "mailstat " + (kind || "wait");
+    el.textContent = text;
+  }
+
+  /* ---------- 状態 ---------- */
+  var S = { list:[], idx:0, score:0, missed:[], label:"", color:"", catId:null, mode:"cat", locked:false };
+
+  /* ---------- メニュー ---------- */
+  function renderMenu(){
+    renderWho();
+
+    // なまえを選ぶまでは、下のメニューを出さない
+    var ready = !!player;
+    document.querySelector(".mode-row").hidden = !ready;
+    document.querySelector("#screen-select .sec-label").hidden = !ready;
+    $("catList").hidden = !ready;
+    $("introLine").hidden = !ready;
+    if(!ready) return;
+
+    var html = "";
+    for(var i=0;i<DATA.length;i++){
+      var c = DATA[i], st = stats[statKey(c.id)];
+      var best = st && st.best != null ? st.best + "/" + c.qs.length : "—";
+      html += '<button class="cat-card" data-cat="'+c.id+'" style="--cs:'+c.color+';--cw:'+c.color+'1f;">'
+            +   '<span class="bdg">'+c.emoji+'</span>'
+            +   '<span class="meta"><span class="name">'+c.name+'</span><span class="desc">'+c.desc+'</span></span>'
+            +   '<span class="right"><span class="best">'+best+'</span><span class="cnt">'+c.qs.length+'問</span></span>'
+            + '</button>';
+    }
+    $("catList").innerHTML = html;
+    var cards = $("catList").querySelectorAll(".cat-card");
+    for(var k=0;k<cards.length;k++){
+      cards[k].addEventListener("click", function(){ startCat(this.getAttribute("data-cat")); });
+    }
+    // 復習ボタン（なまえごと）
+    var wl = wrongList().filter(function(x){ return itemFromKey(x); });
+    wrongAll[player || "_"] = wl; saveWrong();
+    $("reviewCnt").textContent = wl.length ? wl.length + "問たまってるよ" : "まだ無いよ";
+    $("reviewBtn").disabled = wl.length === 0;
+    // 合計
+    var total = 0, done = 0;
+    for(var m=0;m<DATA.length;m++){ total += DATA[m].qs.length; }
+    for(var i2=0;i2<DATA.length;i2++){
+      var stx = stats[statKey(DATA[i2].id)];
+      if(stx && stx.best != null) done += stx.best;
+    }
+    $("totalDone").textContent = "ベスト合計 " + done + " / " + total;
+    $("introLine").textContent = "2027年にはじまる こどもNISA と、投資信託・つみたての基礎を4択クイズで。全"
+      + DATA.length + "ジャンル・" + total + "問。まちがえたら、その場で解説が出るよ。";
+  }
+
+  /* ---------- 出題の開始 ---------- */
+  function buildList(items){
+    return items.map(function(it){
+      var order = shuffle([0,1,2,3]);
+      return { cat:it.cat, qi:it.qi, q:it.q, order:order };
+    });
+  }
+  function startCat(catId){
+    var c = catById(catId); if(!c) return;
+    var items = c.qs.map(function(q,i){ return {cat:c, qi:i, q:q}; });
+    S = { list:buildList(shuffle(items)), idx:0, score:0, missed:[], label:c.name, color:c.color,
+          catId:catId, mode:"cat", locked:false, startedAt:Date.now() };
+    beginQuiz();
+  }
+  function startRandom(){
+    var all = [];
+    DATA.forEach(function(c){ c.qs.forEach(function(q,i){ all.push({cat:c, qi:i, q:q}); }); });
+    S = { list:buildList(shuffle(all).slice(0,20)), idx:0, score:0, missed:[], label:"ランダム20問",
+          color:"#E8A317", catId:null, mode:"random", locked:false, startedAt:Date.now() };
+    beginQuiz();
+  }
+  function startReview(keys){
+    var items = keys.map(itemFromKey).filter(Boolean);
+    if(!items.length) return;
+    S = { list:buildList(shuffle(items)), idx:0, score:0, missed:[], label:"まちがい復習",
+          color:"#E2566B", catId:null, mode:"review", locked:false, startedAt:Date.now() };
+    beginQuiz();
+  }
+  function beginQuiz(){
+    $("pillName").textContent = S.label;
+    $("pillDot").style.background = S.color;
+    $("qTotal").textContent = S.list.length;
+    var p = "";
+    for(var i=0;i<S.list.length;i++) p += "<i></i>";
+    $("progress").innerHTML = p;
+    showScreen("screen-quiz");
+    renderQ();
+  }
+
+  /* ---------- 1問 ---------- */
+  function renderQ(){
+    var cur = S.list[S.idx];
+    S.locked = false;
+    $("qNo").textContent = S.idx + 1;
+    $("scoreNow").textContent = S.score;
+    $("qCat").textContent = cur.cat.emoji + " " + cur.cat.name;
+    $("qText").textContent = cur.q.q;
+    $("expSlot").innerHTML = "";
+    $("tipLine").style.display = "";
+
+    var bars = $("progress").children;
+    for(var i=0;i<bars.length;i++){
+      if(i === S.idx) bars[i].className = "now";
+      else if(i > S.idx) bars[i].className = "";
+    }
+
+    var letters = ["A","B","C","D"];
+    var html = "";
+    for(var n=0;n<cur.order.length;n++){
+      var oi = cur.order[n];
+      html += '<button class="choice" data-oi="'+oi+'"><span class="kb">'+letters[n]+'</span><span>'
+            + cur.q.c[oi] + '</span></button>';
+    }
+    $("choices").innerHTML = html;
+    var btns = $("choices").querySelectorAll(".choice");
+    for(var b=0;b<btns.length;b++){
+      btns[b].addEventListener("click", function(){ answer(parseInt(this.getAttribute("data-oi"),10)); });
+    }
+  }
+
+  function answer(chosen){
+    if(S.locked) return;
+    S.locked = true;
+    var cur = S.list[S.idx];
+    var correct = (chosen === cur.q.a);
+    var btns = $("choices").querySelectorAll(".choice");
+
+    for(var i=0;i<btns.length;i++){
+      var oi = parseInt(btns[i].getAttribute("data-oi"),10);
+      btns[i].disabled = true;
+      if(oi === cur.q.a) btns[i].classList.add("correct");
+      else if(oi === chosen) btns[i].classList.add("wrong");
+      else btns[i].classList.add("dim");
+    }
+    $("progress").children[S.idx].className = correct ? "ok" : "ng";
+    $("tipLine").style.display = "none";
+
+    var k = key(cur.cat.id, cur.qi);
+    if(correct){
+      S.score++;
+      $("scoreNow").textContent = S.score;
+      var wl = wrongList(), w = wl.indexOf(k);
+      if(w >= 0){ wl.splice(w,1); saveWrong(); }
+      sndOk();
+    } else {
+      S.missed.push({ cat:cur.cat, qi:cur.qi, q:cur.q, picked:cur.q.c[chosen] });
+      var wl2 = wrongList();
+      if(wl2.indexOf(k) < 0){ wl2.push(k); saveWrong(); }
+      sndNg();
+    }
+    flash(correct);
+
+    var last = (S.idx === S.list.length - 1);
+    var exp = document.createElement("div");
+    exp.className = "exp";
+    exp.innerHTML =
+      '<div class="hd '+(correct?"ok":"ng")+'">'+(correct?"⭕ せいかい!":"❌ ざんねん…")+'</div>'
+      + '<p class="ansline">正解は <b>'+cur.q.c[cur.q.a]+'</b></p>'
+      + '<p class="body">'+cur.q.e+'</p>'
+      + '<button class="next">'+(last ? "結果を見る" : "次の問題へ →")+'</button>';
+    $("expSlot").appendChild(exp);
+    exp.querySelector(".next").addEventListener("click", nextQ);
+    setTimeout(function(){
+      exp.scrollIntoView({ behavior:"smooth", block:"nearest" });
+    }, 420);
+  }
+
+  function nextQ(){
+    if(S.idx < S.list.length - 1){ S.idx++; renderQ(); window.scrollTo({top:0,behavior:"smooth"}); }
+    else finish();
+  }
+
+  function flash(ok){
+    var v = $("verdict"), m = $("verdictMark");
+    m.textContent = ok ? "⭕" : "❌";
+    m.className = "mark " + (ok ? "vok" : "vng");
+    v.classList.add("show");
+    setTimeout(function(){ v.classList.remove("show"); }, 620);
+  }
+
+  /* ---------- 結果 ---------- */
+  function finish(){
+    var total = S.list.length, sc = S.score, pct = Math.round(sc/total*100);
+
+    if(S.mode === "cat" && S.catId){
+      var st = stats[statKey(S.catId)] || { games:0, best:null, correct:0, asked:0 };
+      st.games++; st.correct += sc; st.asked += total;
+      if(st.best == null || sc > st.best) st.best = sc;
+      stats[statKey(S.catId)] = st; save("stats", stats);
+    } else {
+      var id = statKey("_" + S.mode);
+      var s2 = stats[id] || { games:0, best:null, correct:0, asked:0 };
+      s2.games++; s2.correct += sc; s2.asked += total;
+      stats[id] = s2; save("stats", stats);
+    }
+
+    var emoji, title, line;
+    if(pct === 100){ emoji="🏆"; title="全問正解!"; line="かんぺき。もうこのジャンルは自分のものだね。"; }
+    else if(pct >= 80){ emoji="🎉"; title="よくできました!"; line="かなり分かってる。あと少しで全問正解。"; }
+    else if(pct >= 50){ emoji="👍"; title="いい調子!"; line="半分以上あってるよ。解説を読み直してみよう。"; }
+    else { emoji="📖"; title="ここからだね"; line="まちがえた問題こそ宝物。復習モードでもう一度。"; }
+
+    $("doneEmoji").textContent = emoji;
+    $("doneTitle").textContent = title;
+    $("doneLine").textContent = line;
+    $("doneTotal").textContent = total;
+    $("doneScore").textContent = sc;
+    $("donePct").textContent = "正答率 " + pct + "%";
+    var stars = Math.round(pct/20);
+    var s = ""; for(var i=0;i<5;i++) s += (i<stars ? "⭐" : "☆");
+    $("doneStars").textContent = s;
+
+    $("retryBtn").style.display = (S.mode === "cat") ? "" : "none";
+    $("againWrongBtn").style.display = S.missed.length ? "" : "none";
+
+    if(S.missed.length){
+      var h = '<h3>まちがえた '+S.missed.length+' 問（読み返してね）</h3>';
+      S.missed.forEach(function(m){
+        h += '<div class="ritem"><p class="rq">'+m.cat.emoji+' '+m.q.q+'</p>'
+           + '<p class="ra">正解：'+m.q.c[m.q.a]+'</p>'
+           + '<p class="re">'+m.q.e+'</p></div>';
+      });
+      $("reviewBox").innerHTML = h;
+    } else {
+      $("reviewBox").innerHTML = "";
+    }
+    sendResult(sc, total, pct);
+    showScreen("screen-done");
+  }
+
+  function sendResult(sc, total, pct){
+    if(!mailReady()){ setMailStat("", ""); return; }
+    var payload = payloadBase();
+    payload.mode = S.mode;
+    payload.category = S.label;
+    payload.score = sc;
+    payload.total = total;
+    payload.pct = pct;
+    payload.seconds = Math.round((Date.now() - (S.startedAt || Date.now())) / 1000);
+    payload.wrong = S.missed.map(function(m){
+      return { q:m.q.q, picked:m.picked, answer:m.q.c[m.q.a], category:m.cat.name };
+    });
+
+    setMailStat("おうちの人に けっかを おくっているよ…", "wait");
+    postOnce(payload).then(function(ok){
+      if(ok){
+        setMailStat("おうちの人に けっかを おくったよ ✉️", "ok");
+        flushQueue();
+      } else {
+        enqueue(payload);
+        setMailStat("いまは おくれなかったので、あとで もう一度 おくるね（未送信 " + queue.length + "件）", "ng");
+      }
+    });
+  }
+
+  /* ---------- なまえ ---------- */
+  function pickPlayer(n){
+    player = n;
+    save("player", player);
+    renderMenu();
+  }
+
+  function renderWho(){
+    var box = $("whoBox"), h, i;
+
+    if(!player){
+      // 初回：だれがやるかを4択で選んでもらう
+      h = '<div class="whocard"><b>だれが やる?</b>'
+        + '<p class="sethelp">だれがやったかを記録して、おうちの人に知らせるために使います。</p>'
+        + '<div class="pick-grid">';
+      roster.forEach(function(n){
+        h += '<button class="pick-btn" data-n="' + esc(n) + '">' + esc(n) + '</button>';
+      });
+      h += '</div></div>';
+      box.innerHTML = h;
+    } else {
+      h = '<div class="who-row"><span class="who-lb">だれが やる?</span>';
+      roster.forEach(function(n){
+        h += '<button class="who-pill' + (n === player ? " on" : "") + '" data-n="' + esc(n) + '">'
+           + esc(n) + '</button>';
+      });
+      h += '</div>';
+      box.innerHTML = h;
+    }
+
+    var btns = box.querySelectorAll("[data-n]");
+    for(i=0;i<btns.length;i++){
+      btns[i].addEventListener("click", function(){ pickPlayer(this.getAttribute("data-n")); });
+    }
+  }
+
+  /* ---------- せってい ---------- */
+  function renderSet(){
+    var h = '<div class="pick-grid">';
+    roster.forEach(function(n){
+      h += '<button class="pick-btn' + (n === player ? " on" : "") + '" data-n="' + esc(n) + '">'
+         + esc(n) + '</button>';
+    });
+    h += '</div>';
+    $("setPlayers").innerHTML = h;
+    var btns = $("setPlayers").querySelectorAll("[data-n]");
+    for(var i=0;i<btns.length;i++){
+      btns[i].addEventListener("click", function(){
+        player = this.getAttribute("data-n");
+        save("player", player);
+        renderSet();
+      });
+    }
+
+    $("mailOn").checked = !!mailCfg.on;
+    $("mailUrl").value  = mailCfg.url || "";
+    $("mailTok").value  = mailCfg.token || "";
+    paintQueue();
+    showScreen("screen-set");
+  }
+
+  function paintQueue(){
+    var el = $("queueMsg");
+    if(!queue.length){ el.textContent = ""; return; }
+    el.textContent = "まだ送れていない結果が " + queue.length + " 件あります。次にプレイしたときか、テスト送信のときに一緒に送ります。";
+  }
+
+  function saveMail(){
+    mailCfg.on    = $("mailOn").checked;
+    mailCfg.url   = $("mailUrl").value.trim();
+    mailCfg.token = $("mailTok").value.trim();
+    save("mail", mailCfg);
+  }
+
+  /* ---------- 記録 ---------- */
+  function renderHist(){
+    var games = 0, correct = 0, asked = 0, rows = "";
+    DATA.forEach(function(c){
+      var st = stats[statKey(c.id)];
+      if(!st) return;
+      games += st.games; correct += st.correct; asked += st.asked;
+      rows += '<div class="hrow"><span class="hn">'+c.emoji+' '+c.name+'</span>'
+            + '<span class="hv">'+st.games+'回 ・ ベスト <b>'+st.best+'</b>/'+c.qs.length+'</span></div>';
+    });
+    [["_random","🎲 ランダム20問"],["_review","🔁 まちがい復習"]].forEach(function(p){
+      var st = stats[statKey(p[0])];
+      if(!st) return;
+      games += st.games; correct += st.correct; asked += st.asked;
+      rows += '<div class="hrow"><span class="hn">'+p[1]+'</span>'
+            + '<span class="hv">'+st.games+'回 ・ のべ <b>'+st.correct+'</b>問正解</span></div>';
+    });
+    $("hsGames").textContent = games;
+    $("hsCorrect").textContent = correct;
+    $("hsRate").textContent = asked ? Math.round(correct/asked*100)+"%" : "-";
+    $("histList").innerHTML = rows || '<p class="empty">まだ記録がないよ。<br>まずは1ジャンルやってみよう!</p>';
+    showScreen("screen-hist");
+  }
+
+  /* ---------- イベント ---------- */
+  $("randomBtn").addEventListener("click", startRandom);
+  $("reviewBtn").addEventListener("click", function(){ startReview(wrongList().slice(0,20)); });
+  $("retryBtn").addEventListener("click", function(){ if(S.catId) startCat(S.catId); });
+  $("againWrongBtn").addEventListener("click", function(){
+    startReview(S.missed.map(function(m){ return key(m.cat.id, m.qi); }));
+  });
+  $("otherBtn").addEventListener("click", function(){ renderMenu(); showScreen("screen-select"); });
+  $("histBtn").addEventListener("click", renderHist);
+  $("histBackBtn").addEventListener("click", function(){ renderMenu(); showScreen("screen-select"); });
+  $("histClearBtn").addEventListener("click", function(){
+    if(!confirm("これまでの記録と、まちがい復習リストをぜんぶ消します。いいですか?")) return;
+    stats = {}; wrongAll = {}; save("stats", stats); saveWrong();
+    renderHist();
+  });
+  $("setBtn").addEventListener("click", renderSet);
+  $("setBackBtn").addEventListener("click", function(){ renderMenu(); showScreen("screen-select"); });
+  $("mailSave").addEventListener("click", function(){
+    saveMail();
+    $("mailMsg").textContent = "保存しました。";
+    $("mailMsg").className = "sethelp ok";
+    flushQueue().then(function(n){ if(n) $("mailMsg").textContent = "保存しました。たまっていた " + n + " 件も送信しました。"; paintQueue(); });
+  });
+  $("mailTest").addEventListener("click", function(){
+    saveMail();
+    if(!mailReady()){
+      $("mailMsg").textContent = "受信URLを入れて、「メールを送る」にチェックを入れてください。";
+      $("mailMsg").className = "sethelp ng";
+      return;
+    }
+    $("mailMsg").textContent = "送信中…";
+    $("mailMsg").className = "sethelp";
+    var t = payloadBase(); t.test = true;
+    postOnce(t).then(function(ok){
+      $("mailMsg").textContent = ok
+        ? "受信サーバーに届きました。メールが来ているか確認してください。（サーバーは応答したのにメールが来ない場合は、Code.gs の権限承認がすんでいるか確認してください）"
+        : "受信サーバーに届きませんでした。URLが .../exec で終わっているか、デプロイのアクセス権が「全員」になっているか確認してください。";
+      $("mailMsg").className = "sethelp " + (ok ? "ok" : "ng");
+      if(ok) flushQueue().then(paintQueue);
+    });
+  });
+
+  function paintSound(){ $("soundBtn").textContent = soundOn ? "🔊" : "🔇"; }
+  $("soundBtn").addEventListener("click", function(){
+    soundOn = !soundOn; save("sound", soundOn); paintSound(); if(soundOn) sndOk();
+  });
+
+  /* ---------- 起動 ---------- */
+  paintSound();
+  renderMenu();
+  showScreen("screen-select");
+  flushQueue();
+})();
+</script>
+</body>
+</html>

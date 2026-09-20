@@ -1,0 +1,12 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# editors
+.vscode/
+.idea/
+*.swp
+
+# ローカル専用。Apps Script の URL などをここに書いた場合に備えて
+config.local.js

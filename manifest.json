@@ -1,0 +1,12 @@
+{
+  "name": "とうしクイズ 110",
+  "short_name": "とうしクイズ",
+  "description": "こどもNISA・投資信託・つみたての基礎を4択で学ぶクイズ110問",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F1F5F3",
+  "theme_color": "#F1F5F3",
+  "lang": "ja"
+}
