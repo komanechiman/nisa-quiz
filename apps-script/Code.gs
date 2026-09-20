@@ -97,7 +97,9 @@ function doGet() {
     props.setProperty(PROP_SHOWN, "1");
   }
 
-  var to = TO || Session.getEffectiveUser().getEmail();
+  // このページは URL を知っていれば誰でも開けるので、アドレスは伏せ字にする。
+  // 全文を確認したいときは、エディタで showSecret を実行してください（所有者のみ）。
+  var to = maskEmail(TO || Session.getEffectiveUser().getEmail());
   return HtmlService.createHtmlOutput(setupPage(secret, first, to))
     .setTitle("とうしクイズ 受信サーバー");
 }
@@ -125,6 +127,9 @@ function setupPage(secret, first, to) {
 
   h += '<div style="background:#F5F9F7;border-radius:14px;padding:16px 18px;font-size:13.5px;">';
   h += '<b>メールの送り先</b><br>' + esc(to);
+  h += '<br><span style="font-size:11.5px;color:#6E8189;">'
+     + '（このページは誰でも開けるので伏せ字にしています。'
+     + '全文はエディタで showSecret を実行すると見られます）</span>';
   h += '</div>';
 
   h += '<p style="font-size:12.5px;color:#6E8189;margin-top:20px;">'
@@ -258,6 +263,16 @@ function htmlOf(d) {
 function currentSecret() {
   if (SECRET) return SECRET;
   return PropertiesService.getScriptProperties().getProperty(PROP_SECRET);
+}
+
+/** メールアドレスを伏せ字にする（例: k****i@gmail.com） */
+function maskEmail(e) {
+  e = String(e || "");
+  var at = e.indexOf("@");
+  if (at < 1) return "（不明）";
+  var name = e.slice(0, at), dom = e.slice(at);
+  if (name.length <= 2) return name.charAt(0) + "****" + dom;
+  return name.charAt(0) + "****" + name.charAt(name.length - 1) + dom;
 }
 
 /** 読み書きしやすい合言葉を作る（まぎらわしい 0/O/1/l は使わない） */
