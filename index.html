@@ -376,14 +376,15 @@
     <div class="setcard">
       <h3>✉️ けっかをメールで送る<span class="adult">おとな用</span></h3>
       <p class="sethelp">1セット終わるたびに「だれが・何点だったか・どこを間違えたか」がメールで届きます。使わなくてもクイズはふつうに遊べます。</p>
-      <p class="sethelp" style="margin-bottom:8px;">このページ自体はメールを出せないので、<b>送信係を1回だけ用意します</b>。Googleの無料サービス（Apps Script）を使うので、追加の登録やお金はかかりません。</p>
+      <p class="sethelp" style="margin-bottom:8px;">このページ自体はメールを出せないので、<b>送信係を1回だけ用意します</b>。Googleの無料サービス（Apps Script）を使うので、追加の登録もお金もかかりません。コードを書きかえる必要もありません。</p>
       <ol class="steps">
-        <li>パソコンで <b>script.google.com</b> を開く</li>
-        <li>GitHub の <b>apps-script/Code.gs</b> の中身を貼りつける</li>
-        <li>「デプロイ」→「ウェブアプリ」で公開すると <b>URL</b> が出る（5分ほど）</li>
-        <li>そのURLを下に貼って「保存」→「テスト送信」</li>
+        <li>パソコンで <b>script.google.com</b> →「新しいプロジェクト」</li>
+        <li><b>apps-script/Code.gs</b> を全部コピーして貼る（編集不要）</li>
+        <li>「デプロイ」→「ウェブアプリ」、アクセスできるユーザーを <b>全員</b> にして公開</li>
+        <li>出てきた <b>URL</b> をブラウザで開くと <b>合言葉</b> が表示される</li>
+        <li>そのURLと合言葉を下に貼って「保存」→「テスト送信」</li>
       </ol>
-      <p class="sethelp" style="margin-bottom:12px;">くわしい手順は Code.gs の先頭のコメントに全部書いてあります。</p>
+      <p class="sethelp" style="margin-bottom:12px;">画面ごとの詳しい手順は <b>apps-script/SETUP.md</b> にあります（権限の警告の通りかたも書いてあります）。</p>
       <label class="swrow"><input type="checkbox" id="mailOn"><span>メールを送る</span></label>
       <label class="slabel" for="mailUrl">受信URL（.../exec で終わるもの）</label>
       <input class="tin w" id="mailUrl" type="url" inputmode="url" autocomplete="off" placeholder="https://script.google.com/macros/s/..../exec">

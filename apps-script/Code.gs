@@ -1,34 +1,43 @@
 /**
- * とうしクイズ ─ 結果メール受信サーバー（Google Apps Script）
+ * とうしクイズ ─ 結果メール送信サーバー（Google Apps Script）
  *
- * 【セットアップ手順】
- *  1. https://script.google.com/ を開いて「新しいプロジェクト」
- *  2. このファイルの中身をぜんぶコピーして貼りつけ、プロジェクト名を「とうしクイズ」などに
- *  3. 下の SECRET に、すきな合言葉を入れる（例: "himitsu2027"）
- *  4. 右上「デプロイ」→「新しいデプロイ」→ 種類の選択で「ウェブアプリ」
- *       次のユーザーとして実行 : 自分
- *       アクセスできるユーザー : 全員
- *     →「デプロイ」→ 初回は権限の承認を求められるので許可する
- *  5. 表示される「ウェブアプリのURL」（.../exec で終わるもの）をコピー
- *  6. とうしクイズの ⚙️ せってい を開き、URL と 合言葉 を貼って「保存」→「テスト送信」
+ * このファイルは「まるごとコピーして貼るだけ」で動きます。書きかえる必要はありません。
+ * 合言葉は初回にこのプログラムが自動で作ってくれます。
  *
- * 【コードを直したとき】
- *  「デプロイ」→「デプロイを管理」→ 鉛筆アイコン →
- *  バージョンを「新バージョン」にして「デプロイ」。URL は変わりません。
- *  （「新しいデプロイ」を押すと別のURLになってしまうので注意）
+ * ▼ 手順（SETUP.md にスクリーンショット相当の詳しい説明があります）
+ *   1. script.google.com →「新しいプロジェクト」
+ *   2. 最初から入っている「function myFunction() {}」を全部消して、このファイルを全部貼る
+ *   3. 右上「デプロイ」→「新しいデプロイ」→ 歯車から「ウェブアプリ」を選ぶ
+ *        次のユーザーとして実行 ： 自分
+ *        アクセスできるユーザー ： 全員          ← ここ重要
+ *   4.「デプロイ」→ 権限を承認（「安全ではないページ」警告の通りかたは SETUP.md 参照）
+ *   5. 出てきた「ウェブアプリのURL」(.../exec) を、そのままブラウザで開く
+ *        → 合言葉が表示されます（表示されるのは最初の1回だけ）
+ *   6. とうしクイズの ⚙️ に「URL」と「合言葉」を貼って、保存 → テスト送信
+ *
+ * ▼ 合言葉をもう一度見たい / 作りなおしたいとき
+ *   このエディタの上にある関数リストから showSecret または resetSecret を選んで「実行」。
+ *   結果は「実行ログ」に出ます。
+ *
+ * ▼ コードを直したあと
+ *   「デプロイ」→「デプロイを管理」→ 鉛筆アイコン → バージョン「新バージョン」→「デプロイ」。
+ *   URL は変わりません。（「新しいデプロイ」を押すと別URLになるので注意）
  */
 
-/** 送り先。空にすると、このスクリプトを持っているGoogleアカウント宛に送ります。 */
+/** 送り先。空のままなら、このスクリプトを持っているGoogleアカウント宛に届きます。 */
 var TO = "";
 
-/** 合言葉。アプリの「せってい」に入れるものと同じ文字にしてください。
- *  空のままでも動きますが、そのURLを知った人は誰でもあなた宛にメールを送れてしまいます。
- *  かならず設定することをおすすめします。 */
+/** 合言葉を自分で決めたいときだけ書く。空なら自動生成されます。 */
 var SECRET = "";
 
 /** いたずら対策：1時間に送るメールの上限 */
 var MAX_PER_HOUR = 30;
 
+var PROP_SECRET = "secret";
+var PROP_SHOWN  = "secret_shown";
+
+
+/* ================= 受信 ================= */
 
 function doPost(e) {
   try {
@@ -37,13 +46,17 @@ function doPost(e) {
     }
     var d = JSON.parse(e.postData.contents);
 
-    if (SECRET && d.token !== SECRET) {
+    var secret = currentSecret();
+    if (!secret) {
+      return json({ ok: false, error: "not set up: open this URL in a browser first" });
+    }
+    if (d.token !== secret) {
       return json({ ok: false, error: "bad token" });
     }
     if (!underLimit()) {
       return json({ ok: false, error: "rate limited" });
     }
-    // 同じ結果が二重に届いたとき（アプリ側の再送とすれ違ったとき）は捨てる
+    // 再送とすれちがって同じ結果が二重に届いたときは捨てる
     if (d.id && isDuplicate(d.id)) {
       return json({ ok: true, skipped: "duplicate" });
     }
@@ -62,18 +75,102 @@ function doPost(e) {
   }
 }
 
-/** ブラウザでURLを直接開いたときの動作確認用 */
+
+/* ========== ブラウザで開いたときの画面（合言葉を出す） ========== */
+
 function doGet() {
-  return json({ ok: true, msg: "とうしクイズ 受信サーバーは動いています" });
+  var props  = PropertiesService.getScriptProperties();
+  var secret = currentSecret();
+  var first  = false;
+
+  if (!secret) {
+    secret = makeSecret();
+    props.setProperty(PROP_SECRET, secret);
+  }
+  if (!props.getProperty(PROP_SHOWN)) {
+    first = true;
+    props.setProperty(PROP_SHOWN, "1");
+  }
+
+  var to = TO || Session.getEffectiveUser().getEmail();
+  return HtmlService.createHtmlOutput(setupPage(secret, first, to))
+    .setTitle("とうしクイズ 受信サーバー");
+}
+
+function setupPage(secret, first, to) {
+  var F = "font-family:-apple-system,'Hiragino Sans','Yu Gothic',sans-serif;";
+  var h = '<div style="' + F + 'max-width:520px;margin:32px auto;padding:0 20px;'
+        + 'line-height:1.9;color:#26343A;">';
+  h += '<p style="color:#6E8189;font-size:13px;margin:0;">とうしクイズ</p>';
+  h += '<h1 style="font-size:22px;margin:4px 0 20px;">✅ 受信サーバーは動いています</h1>';
+
+  if (first) {
+    h += '<p style="margin:0 0 6px;font-size:14px;">この「合言葉」をアプリの ⚙️ に貼ってください。</p>';
+    h += '<div style="background:#EAF7F2;border:2px solid #1E9E78;border-radius:14px;'
+       + 'padding:18px;text-align:center;margin-bottom:8px;">'
+       + '<code style="font-size:26px;font-weight:bold;letter-spacing:2px;color:#137A5B;">'
+       + esc(secret) + '</code></div>';
+    h += '<p style="font-size:12.5px;color:#E2566B;font-weight:bold;margin:0 0 20px;">'
+       + '⚠️ この合言葉が表示されるのは、この1回だけです。いまメモしてください。</p>';
+  } else {
+    h += '<p style="font-size:14px;margin:0 0 20px;">合言葉はすでに発行ずみです。'
+       + 'もう一度見たいときは、Apps Script のエディタで関数 <b>showSecret</b> を実行して'
+       + '「実行ログ」を見てください。</p>';
+  }
+
+  h += '<div style="background:#F5F9F7;border-radius:14px;padding:16px 18px;font-size:13.5px;">';
+  h += '<b>メールの送り先</b><br>' + esc(to);
+  h += '</div>';
+
+  h += '<p style="font-size:12.5px;color:#6E8189;margin-top:20px;">'
+     + 'このページのURL（アドレス欄の .../exec）も、アプリの ⚙️ に貼る必要があります。</p>';
+  h += '</div>';
+  return h;
 }
 
 
-/* ---------- メールの中身 ---------- */
+/* ========== エディタから手で実行する用 ========== */
+
+/** 合言葉を表示する（実行ログに出ます） */
+function showSecret() {
+  var s = currentSecret();
+  if (!s) {
+    s = makeSecret();
+    PropertiesService.getScriptProperties().setProperty(PROP_SECRET, s);
+  }
+  Logger.log("合言葉: " + s);
+  Logger.log("メールの送り先: " + (TO || Session.getEffectiveUser().getEmail()));
+  return s;
+}
+
+/** 合言葉を作りなおす（アプリ側にも入れなおしてください） */
+function resetSecret() {
+  var props = PropertiesService.getScriptProperties();
+  var s = makeSecret();
+  props.setProperty(PROP_SECRET, s);
+  props.deleteProperty(PROP_SHOWN);
+  Logger.log("新しい合言葉: " + s);
+  return s;
+}
+
+/** 動作確認：自分あてにテストメールを1通送る */
+function sendTestMail() {
+  MailApp.sendEmail({
+    to: TO || Session.getEffectiveUser().getEmail(),
+    subject: "[とうしクイズ] テスト送信（エディタから）",
+    htmlBody: htmlOf({ test: true, player: "テスト", atLocal: new Date().toLocaleString("ja-JP") }),
+    name: "とうしクイズ"
+  });
+  Logger.log("送信しました: " + (TO || Session.getEffectiveUser().getEmail()));
+}
+
+
+/* ================= メールの中身 ================= */
 
 function subjectOf(d) {
   if (d.test) return "[とうしクイズ] テスト送信";
-  var who = d.player || "だれか";
-  return "[とうしクイズ] " + who + "　" + d.score + "/" + d.total + "（" + (d.category || "") + "）";
+  return "[とうしクイズ] " + (d.player || "だれか") + "　" + d.score + "/" + d.total
+       + "（" + (d.category || "") + "）";
 }
 
 function textOf(d) {
@@ -108,7 +205,8 @@ function htmlOf(d) {
   if (d.test) {
     return '<div style="' + F + 'font-size:15px;line-height:1.8;color:#26343A;">'
       + '<h2 style="margin:0 0 8px;font-size:18px;">✅ テスト送信が届きました</h2>'
-      + '<p style="margin:0;color:#6E8189;">とうしクイズの設定は完了です。これから、プレイするたびに結果が届きます。</p>'
+      + '<p style="margin:0;color:#6E8189;">とうしクイズの設定は完了です。'
+      + 'これから、プレイするたびに結果が届きます。</p>'
       + '<p style="margin:12px 0 0;color:#6E8189;font-size:13px;">なまえ: ' + esc(d.player || "-")
       + '<br>日時: ' + esc(d.atLocal || "") + '</p></div>';
   }
@@ -134,8 +232,8 @@ function htmlOf(d) {
     h += '<p style="margin:0 0 8px;font-size:13px;color:#6E8189;font-weight:bold;">まちがえた '
        + d.wrong.length + ' 問</p>';
     d.wrong.forEach(function (w) {
-      h += '<div style="border-left:4px solid #E2566B;background:#FFF;padding:10px 14px;margin-bottom:8px;'
-         + 'border-radius:0 10px 10px 0;box-shadow:0 1px 3px rgba(0,0,0,.08);">';
+      h += '<div style="border-left:4px solid #E2566B;background:#FFF;padding:10px 14px;'
+         + 'margin-bottom:8px;border-radius:0 10px 10px 0;box-shadow:0 1px 3px rgba(0,0,0,.08);">';
       h += '<div style="font-size:14px;font-weight:bold;margin-bottom:4px;">' + esc(w.q) + '</div>';
       h += '<div style="font-size:13px;color:#E2566B;">えらんだ: ' + esc(w.picked) + '</div>';
       h += '<div style="font-size:13px;color:#1E9E78;">正解　　: ' + esc(w.answer) + '</div>';
@@ -150,7 +248,22 @@ function htmlOf(d) {
 }
 
 
-/* ---------- ユーティリティ ---------- */
+/* ================= ユーティリティ ================= */
+
+function currentSecret() {
+  if (SECRET) return SECRET;
+  return PropertiesService.getScriptProperties().getProperty(PROP_SECRET);
+}
+
+/** 読み書きしやすい合言葉を作る（まぎらわしい 0/O/1/l は使わない） */
+function makeSecret() {
+  var chars = "abcdefghijkmnpqrstuvwxyz23456789";
+  var s = "";
+  for (var i = 0; i < 10; i++) {
+    s += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return s;
+}
 
 function fmtSec(s) {
   s = Number(s) || 0;

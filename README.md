@@ -13,7 +13,8 @@
 | `questions.js` | 問題データ 110 問（`window.QUIZ_DATA`） |
 | `config.js` | アプリ名とメール送信先の既定値（ふつうは空のまま） |
 | `manifest.json` | PWA 用（ホーム画面に追加できる） |
-| `apps-script/Code.gs` | 結果メールを送る Google Apps Script（任意） |
+| `apps-script/Code.gs` | 結果メールを送る Google Apps Script（任意・そのまま貼るだけ） |
+| `apps-script/SETUP.md` | 上のセットアップ手順（画面ごとの説明） |
 
 ## ローカルで動かす
 
@@ -47,9 +48,17 @@ GitHub Pages は静的サイトなのでページ自身はメールを送れま�
 
 ### 手順
 
-1. `apps-script/Code.gs` の先頭コメントの手順どおりに Apps Script をデプロイする（5 分ほど）
-2. 発行された `.../exec` の URL をコピー
-3. アプリの **⚙️ せってい** を開き、URL と合言葉を貼って「保存」→「テスト送信」
+**→ 画面ごとの詳しい手順は [`apps-script/SETUP.md`](apps-script/SETUP.md) にあります。**
+（権限の「このアプリは確認されていません」警告の通りかたも書いてあります。ここで詰まる人が多いので）
+
+ざっくり言うと:
+
+1. script.google.com で新しいプロジェクトを作り、`apps-script/Code.gs` を丸ごと貼る（**編集不要**）
+2. 「デプロイ」→「ウェブアプリ」、アクセスできるユーザーを **全員** にして公開
+3. 出てきた `.../exec` の URL を**ブラウザで開く**と、合言葉が表示される（初回のみ）
+4. アプリの **⚙️ せってい** に URL と合言葉を貼って「保存」→「テスト送信」
+
+合言葉はスクリプトが自動で発行します。見逃したらエディタで `showSecret` を実行すれば再表示できます。
 
 送り先は、既定では **そのスクリプトを持っている Google アカウント宛** です
 （`Session.getEffectiveUser()`）。別のアドレスに送りたいときだけ `Code.gs` の `TO` を書き換えてください。
