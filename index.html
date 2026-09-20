@@ -279,6 +279,19 @@
   .prow .del{ border:none; background:var(--ng-soft); color:var(--ng); border-radius:9px;
     padding:6px 12px; font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; }
 
+  /* --- 読み上げ --- */
+  .qhead{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+  .qhead .qtext{ flex:1; }
+  .say{ flex-shrink:0; width:38px; height:38px; border-radius:50%; border:1px solid var(--edge);
+    background:var(--panel-soft); font-size:17px; cursor:pointer; padding:0;
+    display:flex; align-items:center; justify-content:center; }
+  .say:active{ transform:translateY(2px); }
+  .say.talking{ border-color:var(--accent); background:var(--ok-soft); }
+  .exp .hd{ justify-content:space-between; }
+  .exp .hd .say{ width:32px; height:32px; font-size:15px; }
+  select.tin{ -webkit-appearance:none; appearance:none; background-image:none; }
+  input[type=range]{ width:100%; accent-color:var(--accent); }
+
   .mailstat{ margin-top:14px; font-size:13px; font-weight:700; border-radius:12px; padding:10px 12px; }
   .mailstat[hidden]{ display:none; }
   .mailstat.wait{ background:var(--panel-soft); color:var(--soft); }
@@ -335,7 +348,10 @@
     <div class="progress" id="progress"></div>
     <div class="qcard">
       <div class="qnum" id="qCat">—</div>
-      <p class="qtext" id="qText">—</p>
+      <div class="qhead">
+        <p class="qtext" id="qText">—</p>
+        <button class="say" id="sayQ" aria-label="問題を読み上げる" hidden>🗣</button>
+      </div>
     </div>
     <div class="choices" id="choices"></div>
     <div id="expSlot"></div>
@@ -382,6 +398,23 @@
         <button class="mini sub" id="copyLink">コピー</button>
       </div>
       <p class="sethelp" id="copyMsg" style="margin:6px 0 0;">このリンクで開くと、その人に自動で切りかわります。</p>
+    </div>
+
+    <div class="setcard">
+      <h3>🗣 読み上げ</h3>
+      <p class="sethelp">問題と解説を音声で読み上げます。むずかしい漢字があるときに便利です。</p>
+      <p class="sethelp" id="ttsNA" hidden style="color:var(--ng);font-weight:700;">
+        この端末では読み上げが使えません。</p>
+      <div id="ttsBox">
+        <label class="swrow"><input type="checkbox" id="ttsOn"><span>自動で読み上げる</span></label>
+        <p class="sethelp" style="margin:6px 0 0;">オフでも、🗣ボタンを押せばいつでも読み上げます。</p>
+        <label class="slabel" for="ttsVoice">こえ</label>
+        <select class="tin w" id="ttsVoice"></select>
+        <label class="slabel" for="ttsRate">はやさ　<b id="ttsRateVal">1.0</b></label>
+        <input type="range" id="ttsRate" min="0.6" max="1.4" step="0.05">
+        <div class="btn-row2"><button class="mini sub" id="ttsTest">ためしに読む</button></div>
+        <p class="sethelp" id="ttsMsg" style="margin:10px 0 0;"></p>
+      </div>
     </div>
 
     <div class="setcard">
@@ -475,6 +508,7 @@
   }
   var mailCfg = load("mail", null) || { on:true, url: CFG.MAIL_ENDPOINT || "", token: CFG.MAIL_TOKEN || "" };
   var queue   = load("queue", []);       // 送信できなかった結果
+  var tts     = load("tts", null) || { on:false, rate:1.0, voice:null };
 
   /* ---------- 音 ---------- */
   var actx = null;
@@ -497,6 +531,73 @@
   }
   var sndOk = function(){ beep([880,1318.5], 0.13); };
   var sndNg = function(){ beep([330,247], 0.17); };
+
+  /* ---------- 読み上げ ---------- */
+  var SS = (function(){ try{ return window.speechSynthesis || null; }catch(e){ return null; } })();
+  function ttsOK(){ return !!(SS && window.SpeechSynthesisUtterance); }
+
+  function jaVoices(){
+    if(!ttsOK()) return [];
+    var all = [];
+    try{ all = SS.getVoices() || []; }catch(e){ all = []; }
+    return all.filter(function(v){ return /^ja(-|_|$)/i.test(v.lang || ""); });
+  }
+
+  function stopSpeak(){
+    if(!ttsOK()) return;
+    try{ SS.cancel(); }catch(e){}
+    markTalking(false);
+  }
+
+  function markTalking(on){
+    ["sayQ","sayE"].forEach(function(id){
+      var b = $(id);
+      if(b) b.classList.toggle("talking", !!on);
+    });
+  }
+
+  // 読み上げ中にもう一度押したら止める
+  function speak(text){
+    if(!ttsOK() || !text) return;
+    try{
+      SS.cancel();
+      var u = new SpeechSynthesisUtterance(String(text));
+      u.lang = "ja-JP";
+      u.rate = Number(tts.rate) || 1;
+      var jv = jaVoices();
+      var pick = null;
+      for(var i=0;i<jv.length;i++){ if(jv[i].voiceURI === tts.voice){ pick = jv[i]; break; } }
+      if(!pick) pick = jv[0];
+      if(pick) u.voice = pick;
+      u.onstart = function(){ markTalking(true); };
+      u.onend   = function(){ markTalking(false); };
+      u.onerror = function(){ markTalking(false); };
+      SS.speak(u);
+    }catch(e){}
+  }
+
+  function toggleSpeak(text){
+    if(!ttsOK()) return;
+    var busy = false;
+    try{ busy = SS.speaking || SS.pending; }catch(e){}
+    if(busy){ stopSpeak(); return; }
+    speak(text);
+  }
+
+  // 「…何年?。エー、」のように句読点が重なると不自然なので整える
+  function joinSpeech(parts){
+    return parts.join("。").replace(/([?？!！。、])。/g, "$1 ");
+  }
+  // 問題文＋選択肢を、読み上げ用の一続きの文にする
+  function questionSpeech(cur){
+    var letters = ["エー", "ビー", "シー", "ディー"];
+    var parts = [cur.q.q];
+    cur.order.forEach(function(oi, n){ parts.push(letters[n] + "、" + cur.q.c[oi]); });
+    return joinSpeech(parts);
+  }
+  function explainSpeech(q, correct){
+    return joinSpeech([(correct ? "せいかい" : "ざんねん"), "正解は、" + q.c[q.a], q.e]);
+  }
 
   /* ---------- 便利関数 ---------- */
   function esc(t){
@@ -526,6 +627,7 @@
     return { cat:c, qi:qi, q:c.qs[qi] };
   }
   function showScreen(id){
+    if(typeof stopSpeak === "function") stopSpeak();
     var ss = document.querySelectorAll(".screen");
     for(var i=0;i<ss.length;i++) ss[i].classList.remove("active");
     $(id).classList.add("active");
@@ -745,6 +847,12 @@
     for(var b=0;b<btns.length;b++){
       btns[b].addEventListener("click", function(){ answer(parseInt(this.getAttribute("data-oi"),10)); });
     }
+
+    var sq = $("sayQ");
+    sq.hidden = !ttsOK();
+    sq.onclick = function(){ toggleSpeak(questionSpeech(cur)); };
+    stopSpeak();
+    if(tts.on) speak(questionSpeech(cur));
   }
 
   function answer(chosen){
@@ -783,18 +891,27 @@
     var exp = document.createElement("div");
     exp.className = "exp";
     exp.innerHTML =
-      '<div class="hd '+(correct?"ok":"ng")+'">'+(correct?"⭕ せいかい!":"❌ ざんねん…")+'</div>'
+      '<div class="hd '+(correct?"ok":"ng")+'"><span>'+(correct?"⭕ せいかい!":"❌ ざんねん…")+'</span>'
+      +   (ttsOK() ? '<button class="say" id="sayE" aria-label="解説を読み上げる">🗣</button>' : '')
+      + '</div>'
       + '<p class="ansline">正解は <b>'+cur.q.c[cur.q.a]+'</b></p>'
       + '<p class="body">'+cur.q.e+'</p>'
       + '<button class="next">'+(last ? "結果を見る" : "次の問題へ →")+'</button>';
     $("expSlot").appendChild(exp);
     exp.querySelector(".next").addEventListener("click", nextQ);
+
+    var speechText = explainSpeech(cur.q, correct);
+    var se = $("sayE");
+    if(se) se.onclick = function(){ toggleSpeak(speechText); };
+    stopSpeak();
+    if(tts.on) setTimeout(function(){ speak(speechText); }, 700);  // 効果音のあと
     setTimeout(function(){
       exp.scrollIntoView({ behavior:"smooth", block:"nearest" });
     }, 420);
   }
 
   function nextQ(){
+    stopSpeak();
     if(S.idx < S.list.length - 1){ S.idx++; renderQ(); window.scrollTo({top:0,behavior:"smooth"}); }
     else finish();
   }
@@ -809,6 +926,7 @@
 
   /* ---------- 結果 ---------- */
   function finish(){
+    stopSpeak();
     var total = S.list.length, sc = S.score, pct = Math.round(sc/total*100);
 
     if(S.mode === "cat" && S.catId){
@@ -947,11 +1065,42 @@
     $("lockMe").disabled = !player;
     $("myLink").value = player ? myLink(player) : "";
 
+    renderTts();
     $("mailOn").checked = !!mailCfg.on;
     $("mailUrl").value  = mailCfg.url || "";
     $("mailTok").value  = mailCfg.token || "";
     paintQueue();
     showScreen("screen-set");
+  }
+
+  function renderTts(){
+    var ok = ttsOK();
+    $("ttsNA").hidden = ok;
+    $("ttsBox").hidden = !ok;
+    if(!ok) return;
+    $("ttsOn").checked = !!tts.on;
+    $("ttsRate").value = tts.rate;
+    $("ttsRateVal").textContent = Number(tts.rate).toFixed(2).replace(/0$/,"");
+    paintVoices();
+  }
+
+  function paintVoices(){
+    var sel = $("ttsVoice");
+    if(!sel) return;
+    var jv = jaVoices();
+    if(!jv.length){
+      sel.innerHTML = '<option value="">（日本語の声が見つかりません）</option>';
+      $("ttsMsg").textContent = "日本語の声が入っていないようです。端末の設定で日本語の音声を追加すると読み上げられます。";
+      $("ttsMsg").className = "sethelp ng";
+      return;
+    }
+    var h = "";
+    jv.forEach(function(v){
+      h += '<option value="' + esc(v.voiceURI) + '"'
+         + (v.voiceURI === tts.voice ? " selected" : "") + '>' + esc(v.name) + '</option>';
+    });
+    sel.innerHTML = h;
+    if(!tts.voice) sel.selectedIndex = 0;
   }
 
   function paintQueue(){
@@ -1024,6 +1173,32 @@
       $("copyMsg").textContent = "長押しでコピーしてください。";
     }
   });
+  if(ttsOK()){
+    try{ SS.onvoiceschanged = function(){ if($("ttsVoice")) paintVoices(); }; }catch(e){}
+    $("ttsOn").addEventListener("change", function(){
+      tts.on = this.checked; save("tts", tts);
+      if(!tts.on) stopSpeak();
+    });
+    $("ttsRate").addEventListener("input", function(){
+      tts.rate = parseFloat(this.value); save("tts", tts);
+      $("ttsRateVal").textContent = tts.rate.toFixed(2).replace(/0$/,"");
+    });
+    $("ttsVoice").addEventListener("change", function(){
+      tts.voice = this.value || null; save("tts", tts);
+    });
+    $("ttsTest").addEventListener("click", function(){
+      var jv = jaVoices();
+      if(!jv.length){
+        $("ttsMsg").textContent = "日本語の声が見つからないので読み上げできません。";
+        $("ttsMsg").className = "sethelp ng";
+        return;
+      }
+      $("ttsMsg").textContent = "読み上げています…";
+      $("ttsMsg").className = "sethelp";
+      speak("こどもNISAは、2027年1月からはじまります。年間60万円まで投資できます。");
+    });
+  }
+
   $("mailSave").addEventListener("click", function(){
     saveMail();
     $("mailMsg").textContent = "保存しました。";
