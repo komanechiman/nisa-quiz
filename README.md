@@ -14,7 +14,8 @@
 | `config.js` | アプリ名とメール送信先の既定値（ふつうは空のまま） |
 | `manifest.json` | PWA 用（ホーム画面に追加できる） |
 | `apps-script/Code.gs` | 結果メールを送る Google Apps Script（任意・そのまま貼るだけ） |
-| `apps-script/SETUP.md` | 上のセットアップ手順（画面ごとの説明） |
+| `apps-script/SETUP.md` | 上のセットアップ手順（画面ごとの説明・トラブル対処） |
+| `apps-script/appsscript.json` | 必要な権限を明示するマニフェスト（権限エラーが出たとき用） |
 
 ## ローカルで動かす
 
