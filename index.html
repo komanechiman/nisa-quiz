@@ -444,12 +444,12 @@
   if(Array.isArray(wrongAll)) wrongAll = {};   // 旧形式（なまえ共通）は捨てる
   var soundOn = load("sound", true);
   var roster  = (CFG.PLAYERS && CFG.PLAYERS.length) ? CFG.PLAYERS.slice()
-                                                    : ["あいり", "さき", "まま", "ぱぱ"];
+                                                    : ["アイリーン", "サシャ", "まま", "ぱぱ"];
   var player  = load("player", null);
   if(player !== null && roster.indexOf(player) < 0) player = null;
   var lockMe  = load("lock", false);
 
-  // ?me=あいり のように開くと、その人に固定される（えらぶ画面が出なくなる）。
+  // ?me=アイリーン のように開くと、その人に固定される（えらぶ画面が出なくなる）。
   // iOS Safari は7日使わないと localStorage を消すので、その復帰手段も兼ねている。
   try{
     var qMe = new URLSearchParams(location.search).get("me");
