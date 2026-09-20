@@ -125,6 +125,21 @@ Safari で開く → 共有ボタン → **「ホーム画面に追加」** を�
 
 Android の Chrome にはこの制限はありません。
 
+## 検索よけについて
+
+家庭内で使うものなので、検索エンジンに載らないようにしてあります。
+
+- `robots.txt` … クロール拒否
+- `index.html` の `<meta name="robots" content="noindex, nofollow, noarchive">`
+
+**これは「検索結果に出さない」だけで、アクセス制限ではありません。**
+URL を知っている人は誰でも開けます。個人が特定できる情報は置かない前提で運用してください。
+
+GitHub Pages で本当にアクセス制限をかけるには GitHub Enterprise Cloud（組織アカウント）が必要で、
+個人アカウントの Pro では、リポジトリを private にしても**サイト自体は公開されたまま**です。
+どうしても非公開にしたい場合は、Cloudflare Pages + Cloudflare Access（無料枠50人・メール認証）への
+移行が現実的な選択肢になります。
+
 ## 問題を足す・直す
 
 `questions.js` だけを編集すればOK。形式は：
