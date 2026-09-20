@@ -540,7 +540,8 @@
     };
   }
 
-  // 成功したと言えるのは fetch がレスポンスを返したときだけ。
+  // Apps Script は「あいことばが違う」ときも HTTP 200 を返すので、
+  // ステータスだけでは成否が分からない。本文のJSON（ok:false）まで見る。
   // fetch が落ちたときは sendBeacon も一応投げるが、sendBeacon は「送信キューに積めた」
   // だけで true を返し届いたかは分からないので、成功とは数えずキューに残して再送する。
   // 二重に届く可能性があるぶん、payload.id を見て Code.gs 側で重複を捨てている。
@@ -552,15 +553,42 @@
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: body,
         redirect: "follow"
-      }).then(function(r){ resolve(!!r.ok); })
-        .catch(function(){
-          try{
-            var blob = new Blob([body], { type:"text/plain;charset=utf-8" });
-            if(navigator.sendBeacon) navigator.sendBeacon(mailCfg.url, blob);
-          }catch(e){}
-          resolve(false);
+      }).then(function(r){
+        if(!r.ok){ resolve({ ok:false, error:"http " + r.status }); return; }
+        return r.text().then(function(t){
+          var j = null;
+          try{ j = JSON.parse(t); }catch(e){}
+          if(j && j.ok === false){ resolve({ ok:false, error: j.error || "拒否されました" }); return; }
+          if(!j){ resolve({ ok:false, error:"受信サーバーの返事が読めません（URLを確認）" }); return; }
+          resolve({ ok:true });
         });
+      }).catch(function(){
+        try{
+          var blob = new Blob([body], { type:"text/plain;charset=utf-8" });
+          if(navigator.sendBeacon) navigator.sendBeacon(mailCfg.url, blob);
+        }catch(e){}
+        resolve({ ok:false, error:"つながりませんでした" });
+      });
     });
+  }
+
+  // サーバーが返すエラーを、読んで分かる日本語にする
+  function mailErrorText(err){
+    err = String(err || "");
+    if(err.indexOf("bad token") >= 0){
+      return "あいことばが ちがいます。Apps Script のエディタで関数 showSecret を実行すると、"
+           + "実行ログに正しい合言葉が出ます。";
+    }
+    if(err.indexOf("not set up") >= 0){
+      return "まだ合言葉が発行されていません。受信URLを一度ブラウザで開いてください。";
+    }
+    if(err.indexOf("rate limited") >= 0){
+      return "短時間に送りすぎました。1時間ほどあけてから試してください。";
+    }
+    if(err.indexOf("http") === 0){
+      return "受信サーバーがエラーを返しました（" + err + "）。デプロイのアクセス権が「全員」か確認してください。";
+    }
+    return err;
   }
 
   function enqueue(payload){
@@ -576,8 +604,8 @@
     var sent = 0;
     return pending.reduce(function(chain, item){
       return chain.then(function(){
-        return postOnce(item).then(function(ok){
-          if(ok) sent++; else enqueue(item);
+        return postOnce(item).then(function(res){
+          if(res.ok) sent++; else enqueue(item);
         });
       });
     }, Promise.resolve()).then(function(){ return sent; });
@@ -832,13 +860,14 @@
     });
 
     setMailStat("おうちの人に けっかを おくっているよ…", "wait");
-    postOnce(payload).then(function(ok){
-      if(ok){
+    postOnce(payload).then(function(res){
+      if(res.ok){
         setMailStat("おうちの人に けっかを おくったよ ✉️", "ok");
         flushQueue();
       } else {
         enqueue(payload);
-        setMailStat("いまは おくれなかったので、あとで もう一度 おくるね（未送信 " + queue.length + "件）", "ng");
+        setMailStat("いまは おくれなかったので、あとで もう一度 おくるね（未送信 "
+          + queue.length + "件）", "ng");
       }
     });
   }
@@ -1000,12 +1029,15 @@
     $("mailMsg").textContent = "送信中…";
     $("mailMsg").className = "sethelp";
     var t = payloadBase(); t.test = true;
-    postOnce(t).then(function(ok){
-      $("mailMsg").textContent = ok
-        ? "受信サーバーに届きました。メールが来ているか確認してください。（サーバーは応答したのにメールが来ない場合は、Code.gs の権限承認がすんでいるか確認してください）"
-        : "受信サーバーに届きませんでした。URLが .../exec で終わっているか、デプロイのアクセス権が「全員」になっているか確認してください。";
-      $("mailMsg").className = "sethelp " + (ok ? "ok" : "ng");
-      if(ok) flushQueue().then(paintQueue);
+    postOnce(t).then(function(res){
+      if(res.ok){
+        $("mailMsg").textContent = "送信できました。メールが届いているか確認してください。";
+        $("mailMsg").className = "sethelp ok";
+        flushQueue().then(paintQueue);
+      } else {
+        $("mailMsg").textContent = "送れませんでした：" + mailErrorText(res.error);
+        $("mailMsg").className = "sethelp ng";
+      }
     });
   });
 
